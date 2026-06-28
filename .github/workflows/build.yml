@@ -1,0 +1,46 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+          
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'microsoft'
+          java-version: '17'
+          
+      - name: Install Android workload
+        run: dotnet workload install android
+        
+      - name: Restore packages
+        run: |
+          cd UAssetMobile
+          dotnet restore
+          
+      - name: Build APK
+        run: |
+          cd UAssetMobile
+          dotnet publish -f net8.0-android -c Release \
+            -p:AndroidPackageFormat=apk \
+            -p:AndroidKeyStore=false \
+            -o ./output
+            
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: UAssetMobile-APK
+          path: ./UAssetMobile/output/*.apk
+
